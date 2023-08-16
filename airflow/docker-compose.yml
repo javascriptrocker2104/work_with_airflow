@@ -82,7 +82,7 @@ services:
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-      - ./postgres/init_scripts/:/docker-entrypoint-initdb.d/      
+      - ./postgres/init_scripts/:/docker-entrypoint-initdb.d/
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 5s
@@ -90,16 +90,23 @@ services:
     restart: always
 
   db:
-    image: postgres
-    ports:
-      - 5430:5432
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: test
+    image: postgres:latest
     volumes:
-      - db_vol:/var/lib/postgresql/data
-      - ./postgres/init_scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_vol:/var/lib/postgresql/data/pgdata
+      - ./postgres/init_scripts/task1.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5430:5432"
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:latest
@@ -292,4 +299,7 @@ services:
 volumes:
   postgres-db-volume:
   db_vol:
-  
+
+networks:
+  default:
+    name: exec10-net
